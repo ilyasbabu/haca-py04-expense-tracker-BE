@@ -13,3 +13,7 @@ class ExpenseListSerializer(serializers.Serializer):
     note = serializers.CharField()
     category = serializers.CharField()
     created_date = serializers.DateTimeField()
+
+
+class ExpenseDeleteSerializer(serializers.Serializer):
+    id = serializers.IntegerField()
