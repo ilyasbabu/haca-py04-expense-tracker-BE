@@ -5,6 +5,11 @@ from rest_framework.permissions import IsAuthenticated
 
 from .serializer import ExpenseCreateSerializer, ExpenseListSerializer, ExpenseDeleteSerializer
 from .models import Expense
+from dotenv import load_dotenv
+import os
+from google import genai
+
+load_dotenv()
 
 
 class ExpenseCreateAPI(APIView):
@@ -46,3 +51,25 @@ class ExpenseDeleteAPI(APIView):
         expense = Expense.objects.get(id=serializer.validated_data["id"])
         expense.delete()
         return Response("Expense Deleted Successfully", status=HTTP_201_CREATED)
+
+
+class ExpenseAiOverviewAPI(APIView):
+
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        user = request.user
+        expenses = Expense.objects.filter(user=user)
+        data = list(expenses.values("category", "amount", "created_date", "note"))
+        prompt = f"""
+            Analyse this expense data and give a short summary and advice
+
+            {data}
+
+            keep it simple and user friendly.
+        """
+        client = genai.Client()
+        response = client.models.generate_content(
+            model="gemini-3-flash-preview", contents=prompt
+        )
+        return Response(response.text, status=HTTP_200_OK)
